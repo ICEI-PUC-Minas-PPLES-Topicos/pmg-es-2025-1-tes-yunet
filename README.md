@@ -1,7 +1,4 @@
-# 💻 Desenvolvimento de Aplicações Distribuídas
-Repositório para publicação das resoluções dos exercícios de Laboratório das disciplinas de programação da PUC Minas!
-
-# Sistema de Reconhecimento Facial com OpenCV
+# Sistema Inteligente de Verificação de Acesso por Reconhecimento Facial
 
 Este projeto realiza **detecção** e **reconhecimento facial** em tempo real via webcam, utilizando os modelos da OpenCV baseados em *deep learning* com as redes **YuNet** (para detecção) e **SFace** (para reconhecimento).
 Este projeto realiza detecção e reconhecimento facial em tempo real via webcam, utilizando os modelos da OpenCV baseados em deep learning com as redes YuNet (para detecção) e SFace (para reconhecimento).
@@ -13,6 +10,7 @@ Este projeto realiza detecção e reconhecimento facial em tempo real via webcam
 * Eduardo Augusto Brito
 * Gustavo Henrique dos Santos Riegert
 * Laura Enísia Rodrigues Melo
+
 ## 👨‍🏫 Professor responsável
 
 * Leonardo Vilela Cardoso
@@ -27,6 +25,8 @@ Este projeto realiza detecção e reconhecimento facial em tempo real via webcam
 - Feedback visual com retângulo, pontos de referência e nome do reconhecido
 
 ## 🧠 Contexto do Código
+
+Para a implementação do código foi utilizado como base um código disponibilizado no _Kaggle_, disponível em: https://www.kaggle.com/code/alifarajnia/face-recognition-login/notebook, o qual passou por modificações para permitir a detecção e identificação contínua de múltiplos rostos em tempo real. Além disso, o modelo de detecção foi atualizado para a utilização do _YuNet/_.
 
 Este sistema utiliza dois modelos ONNX:
 
