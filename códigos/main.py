@@ -5,19 +5,25 @@ import tkinter as tk
 from tkinter import simpledialog
 
 ####### INITIALIZATION #######
+
+# Cria e retorna um detector de faces baseado no modelo YUNet (ONNX)
 def FaceDetectorYN(model=False):
     return cv2.FaceDetectorYN.create(model, "", (320, 320), 0.8, 0.3, 5000)
 
+# Cria e retorna um reconhecedor de faces baseado no modelo SFace (ONNX)
 def FaceRecognizerSF(model=False):
     return cv2.FaceRecognizerSF.create(model, "")
 
+# Detecta rostos na imagem com base no tamanho definido
 def Detect(detector, img, width, height):    
     detector.setInputSize((width, height))
     return detector.detect(img)
 
+# Realinha a face detectada na imagem para extração de características
 def Crop(recognizer, image, face):
     return recognizer.alignCrop(image, face)
 
+# Redimensiona a imagem lida para manter sua resolução original
 def reSize(img_path):
     img = cv2.imread(img_path)
     width = int(img.shape[1])
@@ -25,6 +31,7 @@ def reSize(img_path):
     resized = cv2.resize(img, (width, height))
     return resized, height, width
 
+# Janela Tkinter para entrada do nome ao cadastrar uma nova pessoa
 def ask_name():
     root = tk.Tk()
     root.withdraw()
@@ -32,6 +39,7 @@ def ask_name():
     root.destroy()
     return name
 
+# Realiza o cadastro de uma nova pessoa detectada na câmera
 def register_new_person(result, frame, known_faces, known_names, recognizer, folder):
     if result[1] is not None and len(result[1]) > 0:
         print("\n=== Cadastro de nova pessoa ===")
@@ -46,14 +54,16 @@ def register_new_person(result, frame, known_faces, known_names, recognizer, fol
             known_names.append(name)
             print(f"Pessoa '{name}' cadastrada com sucesso!")
 
+            # Salva imagem da face alinhada com nome informado
             save_path = os.path.join(folder, f"{name}.png")
             cv2.imwrite(save_path, face_aligned)
             print(f"Imagem salva em: {save_path}")
         else:
-            print("Cadastro cancelado ou nome inv\u00e1lido.")
+            print("Cadastro cancelado ou nome inválido.")
     else:
         print("Nenhuma face detectada para cadastro.")
 
+# Compara o vetor de características da face atual com os conhecidos
 def recognize_face(face_feature, known_faces, known_names, threshold=1.128):
     min_score = float('inf')
     identity = "Desconhecido"
@@ -65,24 +75,29 @@ def recognize_face(face_feature, known_faces, known_names, threshold=1.128):
                 identity = known_names[i]
     return identity, min_score
 
+# Desenha um círculo com transparência (overlay)
 def draw_transparent_circle(img, center, radius, color, alpha):
     overlay = img.copy()
     cv2.circle(overlay, center, radius, color, -1)
     cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0, img)
 
+# Desenha os elementos gráficos da face: bounding box, landmarks e nome
 def Coords(frame, face, thickness, color, texto=None):
     coords = face[:-1].astype(np.int32)
     x, y, w, h = coords[0], coords[1], coords[2], coords[3]
 
+    # Retângulo da face
     cv2.rectangle(frame, (x, y), (x + w, y + h), (color[0], color[1], color[2]), thickness + 2)
     cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 255), 1)
 
+    # Desenha os landmarks faciais (olhos, nariz, boca, etc)
     point_colors = [(255, 0, 0), (0, 0, 255), (0, 255, 0), (255, 0, 255), (0, 255, 255)]
     for i in range(5):
         px, py = coords[4 + i * 2], coords[5 + i * 2]
         draw_transparent_circle(frame, (px, py), 6, (0, 0, 0), 0.1)
         draw_transparent_circle(frame, (px, py), 3, point_colors[i], 0.3)
 
+    # Exibe o nome e score abaixo do retângulo
     if texto:
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 1.3
@@ -100,15 +115,20 @@ def Coords(frame, face, thickness, color, texto=None):
         cv2.putText(frame, texto, (text_x, text_y), font, font_scale, (255, 255, 255), thickness_text, cv2.LINE_AA)
 
 ### MAIN ###
+
+# Cria a pasta onde as imagens de pessoas serão salvas
 folder = "persons"
 os.makedirs(folder, exist_ok=True)
 
+# Carrega os modelos ONNX para detecção e reconhecimento facial
 FaceDetector = FaceDetectorYN('models/face_detection_yunet_2023mar.onnx')
 FaceRecognizer = FaceRecognizerSF('models/face_recognition_sface_2021dec.onnx')
 
+# Inicializa listas para armazenar as características e nomes conhecidos
 known_faces = []
 known_names = []
 
+# Pré-carrega as faces já salvas para reconhecimento posterior
 for filename in os.listdir(folder):
     if filename.lower().endswith((".png", ".jpg", ".jpeg")):
         name = os.path.splitext(filename)[0]
@@ -124,6 +144,7 @@ for filename in os.listdir(folder):
         else:
             print(f"Nenhuma face detectada em {filename}")
 
+# Inicia a captura da webcam
 cap = cv2.VideoCapture(0)
 cv2.namedWindow("Reconhecimento Facial", cv2.WINDOW_NORMAL)
 cv2.setWindowProperty("Reconhecimento Facial", cv2.WND_PROP_ASPECT_RATIO, cv2.WINDOW_KEEPRATIO)
@@ -131,16 +152,18 @@ width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 FaceDetector.setInputSize((width, height))
 
-threshold = 1.128
+threshold = 1.128  # Limite de similaridade para considerar uma face conhecida
 
+# Função que chama o cadastro ao pressionar Enter
 def handle_enter_key():
     register_new_person(result, frame, known_faces, known_names, FaceRecognizer, folder)
 
+# Loop principal de captura e reconhecimento facial
 while True:
     ret, frame = cap.read()
     if not ret:
         break
-    frame = cv2.flip(frame, 1)
+    frame = cv2.flip(frame, 1)  # Espelha a imagem da webcam
     result = FaceDetector.detect(frame)
     thickness = 2
 
@@ -160,10 +183,11 @@ while True:
     cv2.imshow('Reconhecimento Facial', frame)
 
     key = cv2.waitKey(1) & 0xFF
-    if key == 27:
+    if key == 27:  # ESC para sair
         break
-    elif key == 13:
+    elif key == 13:  # ENTER para cadastrar
         handle_enter_key()
 
+# Libera recursos
 cap.release()
 cv2.destroyAllWindows()
