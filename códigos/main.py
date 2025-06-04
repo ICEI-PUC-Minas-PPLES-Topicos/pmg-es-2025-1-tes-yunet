@@ -3,6 +3,8 @@ import os
 import numpy as np
 import tkinter as tk
 from tkinter import simpledialog
+import sys
+print("Versão do Python:", sys.version)
 
 ####### INITIALIZATION #######
 
